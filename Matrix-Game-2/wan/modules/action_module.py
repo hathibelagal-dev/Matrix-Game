@@ -7,7 +7,7 @@ from .posemb_layers import apply_rotary_emb, get_nd_rotary_pos_embed
 import math
 from torch.nn.attention.flex_attention import flex_attention
 
-
+FLASH_ATTN_3_AVAILABLE = False
 
 DISABLE_COMPILE = False  # get os env
 flex_attention = torch.compile(
