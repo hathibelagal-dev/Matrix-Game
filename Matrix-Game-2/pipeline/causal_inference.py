@@ -1,32 +1,22 @@
-from typing import List, Optional
+from typing import Optional
 import numpy as np
 import torch
-import time
 import copy
 
 from einops import rearrange
-from utils.wan_wrapper import WanDiffusionWrapper, WanVAEWrapper
+from utils.wan_wrapper import WanDiffusionWrapper
 from utils.visualize import process_video
 import torch.nn.functional as F
 from demo_utils.constant import ZERO_VAE_CACHE
 from tqdm import tqdm
 
 def get_current_action(mode="universal"):
-
-    CAM_VALUE = 0.1
     if mode == 'universal':
         print()
         print('-'*30)
         print("PRESS [I, K, J, L, U] FOR CAMERA TRANSFORM\n (I: up, K: down, J: left, L: right, U: no move)")
         print("PRESS [W, S, A, D, Q] FOR MOVEMENT\n (W: forward, S: back, A: left, D: right, Q: no move)")
         print('-'*30)
-        CAMERA_VALUE_MAP = {
-            "i":  [CAM_VALUE, 0],
-            "k":  [-CAM_VALUE, 0],
-            "j":  [0, -CAM_VALUE],
-            "l":  [0, CAM_VALUE],
-            "u":  [0, 0]
-        }
         KEYBOARD_IDX = { 
             "w": [1, 0, 0, 0], "s": [0, 1, 0, 0], "a": [0, 0, 1, 0], "d": [0, 0, 0, 1],
             "q": [0, 0, 0, 0]
@@ -34,75 +24,13 @@ def get_current_action(mode="universal"):
         flag = 0
         while flag != 1:
             try:
-                idx_mouse = input('Please input the mouse action (e.g. `U`):\n').strip().lower()
                 idx_keyboard = input('Please input the keyboard action (e.g. `W`):\n').strip().lower()
-                if idx_mouse in CAMERA_VALUE_MAP.keys() and idx_keyboard in KEYBOARD_IDX.keys():
-                    flag = 1
-            except:
-                pass
-        mouse_cond = torch.tensor(CAMERA_VALUE_MAP[idx_mouse]).cuda()
-        keyboard_cond = torch.tensor(KEYBOARD_IDX[idx_keyboard]).cuda()
-    elif mode == 'gta_drive':
-        print()
-        print('-'*30)
-        print("PRESS [W, S, A, D, Q] FOR MOVEMENT\n (W: forward, S: back, A: left, D: right, Q: no move)")
-        print('-'*30)
-        CAMERA_VALUE_MAP = {
-            "a":  [0, -CAM_VALUE],
-            "d":  [0, CAM_VALUE],
-            "q":  [0, 0]
-        }
-        KEYBOARD_IDX = { 
-            "w": [1, 0], "s": [0, 1],
-            "q": [0, 0]
-        }
-        flag = 0
-        while flag != 1:
-            try:
-                indexes = input('Please input the actions (split with ` `):\n(e.g. `W` for forward, `W A` for forward and left)\n').strip().lower().split(' ')
-                idx_mouse = []
-                idx_keyboard = []
-                for i in indexes:
-                    if i in CAMERA_VALUE_MAP.keys():
-                        idx_mouse += [i]
-                    elif i in KEYBOARD_IDX.keys():
-                        idx_keyboard += [i]
-                if len(idx_mouse) == 0:
-                    idx_mouse += ['q']
-                if len(idx_keyboard) == 0:
-                    idx_keyboard += ['q']
-                assert idx_mouse in [['a'], ['d'], ['q']] and idx_keyboard in [['q'], ['w'], ['s']]
-                flag = 1
-            except:
-                pass
-        mouse_cond = torch.tensor(CAMERA_VALUE_MAP[idx_mouse[0]]).cuda()
-        keyboard_cond = torch.tensor(KEYBOARD_IDX[idx_keyboard[0]]).cuda()
-    elif mode == 'templerun':
-        print()
-        print('-'*30)
-        print("PRESS [W, S, A, D, Z, C, Q] FOR ACTIONS\n (W: jump, S: slide, A: left side, D: right side, Z: turn left, C: turn right, Q: no move)")
-        print('-'*30)
-        KEYBOARD_IDX = { 
-            "w": [0, 1, 0, 0, 0, 0, 0], "s": [0, 0, 1, 0, 0, 0, 0],
-            "a": [0, 0, 0, 0, 0, 1, 0], "d": [0, 0, 0, 0, 0, 0, 1],
-            "z": [0, 0, 0, 1, 0, 0, 0], "c": [0, 0, 0, 0, 1, 0, 0],
-            "q": [1, 0, 0, 0, 0, 0, 0]
-        }
-        flag = 0
-        while flag != 1:
-            try:
-                idx_keyboard = input('Please input the action: \n(e.g. `W` for forward, `Z` for turning left)\n').strip().lower()
                 if idx_keyboard in KEYBOARD_IDX.keys():
                     flag = 1
             except:
                 pass
         keyboard_cond = torch.tensor(KEYBOARD_IDX[idx_keyboard]).cuda()
     
-    if mode != 'templerun':
-        return {
-            "mouse": mouse_cond,
-            "keyboard": keyboard_cond
-        }
     return {
         "keyboard": keyboard_cond
     }
@@ -119,11 +47,7 @@ def cond_current(conditional_dict, current_start_frame, num_frame_per_block, rep
         else:
             last_frame_num = 4 * num_frame_per_block
         final_frame = 1 + 4 * (current_start_frame + num_frame_per_block-1)
-        if mode != 'templerun':
-            conditional_dict["mouse_cond"][:, -last_frame_num + final_frame: final_frame] = replace['mouse'][None, None, :].repeat(1, last_frame_num, 1)
         conditional_dict["keyboard_cond"][:, -last_frame_num + final_frame: final_frame] = replace['keyboard'][None, None, :].repeat(1, last_frame_num, 1)
-    if mode != 'templerun':
-        new_cond["mouse_cond"] = conditional_dict["mouse_cond"][:, : 1 + 4 * (current_start_frame + num_frame_per_block - 1)]
     new_cond["keyboard_cond"] = conditional_dict["keyboard_cond"][:, : 1 + 4 * (current_start_frame + num_frame_per_block - 1)]
 
     if replace != None:
@@ -135,7 +59,6 @@ class CausalInferencePipeline(torch.nn.Module):
     def __init__(
             self,
             args,
-            device="cuda",
             generator=None,
             vae_decoder=None,
     ):
@@ -650,16 +573,10 @@ class CausalInferenceStreamingPipeline(torch.nn.Module):
             video = rearrange(video, "B T C H W -> B T H W C")
             video = ((video.float() + 1) * 127.5).clip(0, 255).cpu().numpy().astype(np.uint8)[0]
             video = np.ascontiguousarray(video)
-            mouse_icon = 'assets/images/mouse.png'
-            if mode != 'templerun':
-                config = (
-                    conditional_dict["keyboard_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy(),
-                    conditional_dict["mouse_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy(),
-                )
-            else:
-                config = (
-                    conditional_dict["keyboard_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy()
-                )
+
+            config = (
+                conditional_dict["keyboard_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy()
+            )
             process_video(video.astype(np.uint8), output_folder+f'/{name}_current.mp4', config, mouse_icon, mouse_scale=0.1, process_icon=False, mode=mode)
             current_start_frame += current_num_frames
 
@@ -670,18 +587,11 @@ class CausalInferenceStreamingPipeline(torch.nn.Module):
         videos = rearrange(videos_tensor, "B T C H W -> B T H W C")
         videos = ((videos.float() + 1) * 127.5).clip(0, 255).cpu().numpy().astype(np.uint8)[0]
         video = np.ascontiguousarray(videos)
-        mouse_icon = 'assets/images/mouse.png'
-        if mode != 'templerun':
-            config = (
-                conditional_dict["keyboard_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy(),
-                conditional_dict["mouse_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy(),
-            )
-        else:
-            config = (
-                conditional_dict["keyboard_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy()
-            )
-        process_video(video.astype(np.uint8), output_folder+f'/{name}_icon.mp4', config, mouse_icon, mouse_scale=0.1, mode=mode)
-        process_video(video.astype(np.uint8), output_folder+f'/{name}.mp4', config, mouse_icon, mouse_scale=0.1, process_icon=False, mode=mode)
+
+        config = (
+            conditional_dict["keyboard_cond"][0, : 1 + 4 * (current_start_frame + self.num_frame_per_block-1)].float().cpu().numpy()
+        )
+        process_video(video.astype(np.uint8), 'gamegen.mp4')
 
         if return_latents:
             return output
