@@ -1,13 +1,17 @@
 from typing import Any, List, Tuple, Optional, Union, Dict
 from einops import rearrange
-from .custom_attention import custom_attention as flash_attn_func
 import torch
 import torch.nn as nn
 from .posemb_layers import apply_rotary_emb, get_nd_rotary_pos_embed
 import math
 from torch.nn.attention.flex_attention import flex_attention
 
-FLASH_ATTN_3_AVAILABLE = False
+try:
+    import flash_attn_interface
+    FLASH_ATTN_3_AVAILABLE = True
+except:
+    from flash_attn import flash_attn_func
+    FLASH_ATTN_3_AVAILABLE = False
 
 
 DISABLE_COMPILE = False  # get os env
@@ -298,13 +302,26 @@ class ActionModule(nn.Module):
                     kv_cache_mouse["k"][:, local_start_index:local_end_index] = k
                     kv_cache_mouse["v"][:, local_start_index:local_end_index] = v
 
-                    attn = flash_attn_func(
-                        q,
-                        kv_cache_mouse["k"][:, max(0, local_end_index - max_attention_size):local_end_index],
-                        kv_cache_mouse["v"][:, max(0, local_end_index - max_attention_size):local_end_index],
-                    )
+                    if FLASH_ATTN_3_AVAILABLE:
+                        attn, attn_prob = flash_attn_interface.flash_attn_func(
+                            q,
+                            kv_cache_mouse["k"][:, max(0, local_end_index - max_attention_size):local_end_index],
+                            kv_cache_mouse["v"][:, max(0, local_end_index - max_attention_size):local_end_index],
+                        )
+                    else:
+                        attn = flash_attn_func(
+                            q,
+                            kv_cache_mouse["k"][:, max(0, local_end_index - max_attention_size):local_end_index],
+                            kv_cache_mouse["v"][:, max(0, local_end_index - max_attention_size):local_end_index],
+                        )
                     kv_cache_mouse["global_end_index"].fill_(current_end)
                     kv_cache_mouse["local_end_index"].fill_(local_end_index)
+            else:
+                attn = flash_attn_func(
+                        q, # 880, f, 16, 64
+                        k, # 880, f, 16, 64
+                        v, # 880, f, 16, 64
+                    )
             # Compute cu_squlens and max_seqlen for flash attention
             # qk norm
             attn = rearrange(attn, '(b S) T h d -> b (T S) (h d)',b=B)
