@@ -24,7 +24,7 @@ class InteractiveGameInference:
 
         self.frame_process = v2.Compose([
             v2.Resize(size=(352, 640), antialias=True),
-            v2.ToTensor(),
+            v2.ToDtype(torch.float32, scale=True),
             v2.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
         ])
 
@@ -79,7 +79,7 @@ class InteractiveGameInference:
     
     def generate_videos(self):
         mode = "universal"
-        num_output_frames = 97
+        num_output_frames = 84
         image = load_image("/content/input.png")
         image = self._resizecrop(image, 352, 640)
         print("Resized input image.")
