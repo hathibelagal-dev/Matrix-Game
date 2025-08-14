@@ -147,7 +147,7 @@ class WanSelfAttention(nn.Module):
 
         q, k, v = qkv_fn(x)
         # print(k.shape, seq_lens)
-        x = flash_attention(
+        x = attention(
             q=rope_apply(q, grid_sizes, freqs),
             k=rope_apply(k, grid_sizes, freqs),
             v=v,
@@ -252,7 +252,7 @@ class WanI2VCrossAttention(WanSelfAttention):
             k = self.norm_k(self.k(context)).view(b, -1, n, d)
             v = self.v(context).view(b, -1, n, d)
         # compute attention
-        x = flash_attention(q, k, v, k_lens=None)
+        x = attention(q, k, v, k_lens=None)
 
         # output
         x = x.flatten(2)
