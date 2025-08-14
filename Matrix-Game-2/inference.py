@@ -50,14 +50,17 @@ class InteractiveGameInference:
         print("Loading Pretrained Model...")
         state_dict = load_file("/content/base_distilled_model/base_distill.safetensors")
         pipeline.generator.load_state_dict(state_dict)
+        print("Loaded pretrained model.")
 
         self.pipeline = pipeline.to(device=self.device, dtype=self.weight_dtype)
         self.pipeline.vae_decoder.to(torch.float16)
 
+        print("Loading VAE...")
         vae = get_wanx_vae_wrapper("/content/", torch.float16)
         vae.requires_grad_(False)
         vae.eval()
         self.vae = vae.to(self.device, self.weight_dtype)
+        print("VAE ready.")
 
     def _resizecrop(self, image, th, tw):
         w, h = image.size
