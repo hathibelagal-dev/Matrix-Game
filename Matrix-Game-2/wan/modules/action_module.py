@@ -305,12 +305,6 @@ class ActionModule(nn.Module):
                     )
                     kv_cache_mouse["global_end_index"].fill_(current_end)
                     kv_cache_mouse["local_end_index"].fill_(local_end_index)
-            else:
-                attn = flash_attn_func(
-                        q, # 880, f, 16, 64
-                        k, # 880, f, 16, 64
-                        v, # 880, f, 16, 64
-                    )
             # Compute cu_squlens and max_seqlen for flash attention
             # qk norm
             attn = rearrange(attn, '(b S) T h d -> b (T S) (h d)',b=B)
