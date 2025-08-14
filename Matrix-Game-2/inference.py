@@ -77,7 +77,7 @@ class InteractiveGameInference:
     def generate_videos(self):
         mode = "universal"
         num_output_frames = 97
-        image = load_image("input.png")
+        image = load_image("/content/input.png")
         image = self._resizecrop(image, 352, 640)
         image = self.frame_process(image)[None, :, None, :, :].to(dtype=self.weight_dtype, device=self.device)
         # Encode the input image as the first latent
