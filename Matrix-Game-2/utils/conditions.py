@@ -28,7 +28,7 @@ def Bench_actions_universal(num_frames, num_samples_per_action=4):
     actions_single_action = [
         "forward",
     ]
-    actions_to_test = actions_single_action * 3
+    actions_to_test = actions_single_action * 1
 
     base_action = actions_single_action
 
