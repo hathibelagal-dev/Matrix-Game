@@ -116,7 +116,7 @@ class InteractiveGameInference:
         videos = rearrange(videos_tensor, "B T C H W -> B T H W C")
         videos = ((videos.float() + 1) * 127.5).clip(0, 255).cpu().numpy().astype(np.uint8)[0]
         video = np.ascontiguousarray(videos)
-        process_video(video.astype(np.uint8), 'gamegen.mp4')
+        process_video(video.astype(np.uint8), '/content/gamegen.mp4')
         print("Done")
 
 def main():
