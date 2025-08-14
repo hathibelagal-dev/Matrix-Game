@@ -35,7 +35,7 @@ class InteractiveGameInference:
         generator = WanDiffusionWrapper(
             **getattr(self.config, "model_kwargs", {}), is_causal=True)
         current_vae_decoder = VAEDecoderWrapper()
-        vae_state_dict = torch.load("Wan2.1_VAE.pth", map_location="cpu")
+        vae_state_dict = torch.load("/content/Wan2.1_VAE.pth", map_location="cpu")
         decoder_state_dict = {}
         for key, value in vae_state_dict.items():
             if 'decoder.' in key or 'conv2' in key:
