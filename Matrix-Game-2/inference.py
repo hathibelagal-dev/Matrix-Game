@@ -82,16 +82,17 @@ class InteractiveGameInference:
         num_output_frames = 97
         image = load_image("/content/input.png")
         image = self._resizecrop(image, 352, 640)
+        print("Resized input image.")
         image = self.frame_process(image)[None, :, None, :, :].to(dtype=self.weight_dtype, device=self.device)
         # Encode the input image as the first latent
         padding_video = torch.zeros_like(image).repeat(1, 1, 4 * (num_output_frames - 1), 1, 1)
         img_cond = torch.concat([image, padding_video], dim=2)
         tiler_kwargs={"tiled": True, "tile_size": [44, 80], "tile_stride": [23, 38]}
+        print("Encoding input image...")
         img_cond = self.vae.encode(img_cond, device=self.device, **tiler_kwargs).to(self.device)
         mask_cond = torch.ones_like(img_cond)
         mask_cond[:, :, 1:] = 0
-        cond_concat = torch.cat([mask_cond[:, :4], img_cond], dim=1) 
-        print("Encoding input image...")
+        cond_concat = torch.cat([mask_cond[:, :4], img_cond], dim=1)         
         visual_context = self.vae.clip.encode_video(image)
         print("Encoded.")
         sampled_noise = torch.randn(
