@@ -27,6 +27,9 @@ def combine_data(data, num_frames=57, keyboard_dim=6):
 def Bench_actions_universal(num_frames, num_samples_per_action=4):
     actions_single_action = [
         "forward",
+        "forward",
+        "left",
+        "forward"
     ]
     actions_to_test = actions_single_action * 1
 

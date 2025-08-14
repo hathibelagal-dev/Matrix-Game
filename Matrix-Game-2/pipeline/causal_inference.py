@@ -174,11 +174,12 @@ class CausalInferencePipeline(torch.nn.Module):
 
         # Step 3: Temporal denoising loop
         all_num_frames = [self.num_frame_per_block] * num_blocks
+
         if profile:
             diffusion_start = torch.cuda.Event(enable_timing=True)
             diffusion_end = torch.cuda.Event(enable_timing=True)
-        for current_num_frames in tqdm(all_num_frames):
 
+        for current_num_frames in tqdm(all_num_frames):
             noisy_input = noise[
                 :, :, current_start_frame - num_input_frames:current_start_frame + current_num_frames - num_input_frames]
 
@@ -186,6 +187,7 @@ class CausalInferencePipeline(torch.nn.Module):
             if profile:
                 torch.cuda.synchronize()
                 diffusion_start.record()
+            
             for index, current_timestep in enumerate(self.denoising_step_list):
                 # set current timestep
                 timestep = torch.ones(
