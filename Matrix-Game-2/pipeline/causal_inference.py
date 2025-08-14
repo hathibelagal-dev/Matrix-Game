@@ -1,5 +1,3 @@
-from typing import Optional
-import numpy as np
 import torch
 import copy
 
@@ -9,31 +7,6 @@ from utils.visualize import process_video
 import torch.nn.functional as F
 from demo_utils.constant import ZERO_VAE_CACHE
 from tqdm import tqdm
-
-def get_current_action(mode="universal"):
-    if mode == 'universal':
-        print()
-        print('-'*30)
-        print("PRESS [I, K, J, L, U] FOR CAMERA TRANSFORM\n (I: up, K: down, J: left, L: right, U: no move)")
-        print("PRESS [W, S, A, D, Q] FOR MOVEMENT\n (W: forward, S: back, A: left, D: right, Q: no move)")
-        print('-'*30)
-        KEYBOARD_IDX = { 
-            "w": [1, 0, 0, 0], "s": [0, 1, 0, 0], "a": [0, 0, 1, 0], "d": [0, 0, 0, 1],
-            "q": [0, 0, 0, 0]
-        }
-        flag = 0
-        while flag != 1:
-            try:
-                idx_keyboard = input('Please input the keyboard action (e.g. `W`):\n').strip().lower()
-                if idx_keyboard in KEYBOARD_IDX.keys():
-                    flag = 1
-            except:
-                pass
-        keyboard_cond = torch.tensor(KEYBOARD_IDX[idx_keyboard]).cuda()
-    
-    return {
-        "keyboard": keyboard_cond
-    }
 
 def cond_current(conditional_dict, current_start_frame, num_frame_per_block, replace=None, mode='universal'):
     
