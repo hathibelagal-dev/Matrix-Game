@@ -79,7 +79,7 @@ class InteractiveGameInference:
     
     def generate_videos(self):
         mode = "universal"
-        num_output_frames = 12
+        num_output_frames = 24
         image = load_image("/content/input.png")
         image = self._resizecrop(image, 352, 640)
         print("Resized input image.")

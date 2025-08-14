@@ -30,6 +30,13 @@ def Bench_actions_universal(num_frames, num_samples_per_action=4):
         "forward",
         "left",
         "forward"
+        "forward"
+        "forward",
+        "left",
+        "left",
+        "forward"
+        "forward"
+        "forward",
     ]
     actions_to_test = actions_single_action * 1
 
