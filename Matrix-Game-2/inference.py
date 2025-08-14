@@ -91,7 +91,9 @@ class InteractiveGameInference:
         mask_cond = torch.ones_like(img_cond)
         mask_cond[:, :, 1:] = 0
         cond_concat = torch.cat([mask_cond[:, :4], img_cond], dim=1) 
+        print("Encoding input image...")
         visual_context = self.vae.clip.encode_video(image)
+        print("Encoded.")
         sampled_noise = torch.randn(
             [1, 16,num_output_frames, 44, 80], device=self.device, dtype=self.weight_dtype
         )
@@ -106,6 +108,7 @@ class InteractiveGameInference:
         conditional_dict['mouse_cond'] = None
         conditional_dict['keyboard_cond'] = cond_data['keyboard_condition'].unsqueeze(0).to(device=self.device, dtype=self.weight_dtype)
         
+        print("Now running the inference pipeline...")
         with torch.no_grad():
             videos = self.pipeline.inference(
                 noise=sampled_noise,

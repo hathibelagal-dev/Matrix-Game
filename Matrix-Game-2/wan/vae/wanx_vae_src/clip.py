@@ -19,7 +19,6 @@ __all__ = [
     'CLIPModel',
 ]
 
-
 def pos_interpolate(pos, seq_len):
     if pos.size(1) == seq_len:
         return pos
@@ -88,7 +87,7 @@ class SelfAttention(nn.Module):
 
         # compute attention
         p = self.attn_dropout if self.training else 0.0
-        x = flash_attention(q, k, v, dropout_p=p, causal=self.causal, version=2)
+        x = attention(q, k, v, dropout_p=p, causal=self.causal, version=2)
         x = x.reshape(b, s, c)
 
         # output
