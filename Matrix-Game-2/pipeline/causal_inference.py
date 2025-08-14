@@ -20,7 +20,11 @@ def cond_current(conditional_dict, current_start_frame, num_frame_per_block, rep
         else:
             last_frame_num = 4 * num_frame_per_block
         final_frame = 1 + 4 * (current_start_frame + num_frame_per_block-1)
+
+        conditional_dict["mouse_cond"][:, -last_frame_num + final_frame: final_frame] = replace['mouse'][None, None, :].repeat(1, last_frame_num, 1)
         conditional_dict["keyboard_cond"][:, -last_frame_num + final_frame: final_frame] = replace['keyboard'][None, None, :].repeat(1, last_frame_num, 1)
+
+    new_cond["mouse_cond"] = conditional_dict["mouse_cond"][:, : 1 + 4 * (current_start_frame + num_frame_per_block - 1)]
     new_cond["keyboard_cond"] = conditional_dict["keyboard_cond"][:, : 1 + 4 * (current_start_frame + num_frame_per_block - 1)]
 
     if replace != None:
