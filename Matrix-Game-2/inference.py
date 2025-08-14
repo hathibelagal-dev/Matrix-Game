@@ -48,7 +48,7 @@ class InteractiveGameInference:
         pipeline = CausalInferencePipeline(self.config, generator=generator, vae_decoder=current_vae_decoder)
 
         print("Loading Pretrained Model...")
-        state_dict = load_file("/content/")
+        state_dict = load_file("/content/base_distilled_model/base_distill.safetensors")
         pipeline.generator.load_state_dict(state_dict)
 
         self.pipeline = pipeline.to(device=self.device, dtype=self.weight_dtype)
