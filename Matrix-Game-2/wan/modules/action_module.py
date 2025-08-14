@@ -1,5 +1,6 @@
 from typing import Any, List, Tuple, Optional, Union, Dict
 from einops import rearrange
+from .custom_attention import custom_attention as flash_attn_func
 import torch
 import torch.nn as nn
 from .posemb_layers import apply_rotary_emb, get_nd_rotary_pos_embed
@@ -297,18 +298,11 @@ class ActionModule(nn.Module):
                     kv_cache_mouse["k"][:, local_start_index:local_end_index] = k
                     kv_cache_mouse["v"][:, local_start_index:local_end_index] = v
 
-                    if FLASH_ATTN_3_AVAILABLE:
-                        attn, attn_prob = flash_attn_interface.flash_attn_func(
-                            q,
-                            kv_cache_mouse["k"][:, max(0, local_end_index - max_attention_size):local_end_index],
-                            kv_cache_mouse["v"][:, max(0, local_end_index - max_attention_size):local_end_index],
-                        )
-                    else:
-                        attn = flash_attn_func(
-                            q,
-                            kv_cache_mouse["k"][:, max(0, local_end_index - max_attention_size):local_end_index],
-                            kv_cache_mouse["v"][:, max(0, local_end_index - max_attention_size):local_end_index],
-                        )
+                    attn = flash_attn_func(
+                        q,
+                        kv_cache_mouse["k"][:, max(0, local_end_index - max_attention_size):local_end_index],
+                        kv_cache_mouse["v"][:, max(0, local_end_index - max_attention_size):local_end_index],
+                    )
                     kv_cache_mouse["global_end_index"].fill_(current_end)
                     kv_cache_mouse["local_end_index"].fill_(local_end_index)
             else:
