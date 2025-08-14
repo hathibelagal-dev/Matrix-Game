@@ -9,7 +9,7 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from diffusers.models import ModelMixin
 
-from .attention import flash_attention
+from .attention import attention
 from .tokenizers import HuggingfaceTokenizer
 from .xlm_roberta import XLMRoberta
 
