@@ -1,18 +1,12 @@
 from typing import Any, List, Tuple, Optional, Union, Dict
 from einops import rearrange
-from flash_attn import flash_attn_func
 import torch
 import torch.nn as nn
 from .posemb_layers import apply_rotary_emb, get_nd_rotary_pos_embed
 import math
 from torch.nn.attention.flex_attention import flex_attention
 
-try:
-    import flash_attn_interface
-    FLASH_ATTN_3_AVAILABLE = True
-except:
-    from flash_attn import flash_attn_func
-    FLASH_ATTN_3_AVAILABLE = False
+FLASH_ATTN_3_AVAILABLE = False
 
 
 DISABLE_COMPILE = False  # get os env
