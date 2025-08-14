@@ -16,7 +16,6 @@ from diffusers.models.modeling_utils import ModelMixin
 import torch.nn as nn
 import torch
 import math
-import torch.distributed as dist
 from .action_module import ActionModule
 
 # wan 1.3B model has a weird channel / head configurations and require max-autotune to work with flexattention

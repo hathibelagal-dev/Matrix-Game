@@ -48,13 +48,13 @@ class InteractiveGameInference:
         pipeline = CausalInferencePipeline(self.config, generator=generator, vae_decoder=current_vae_decoder)
 
         print("Loading Pretrained Model...")
-        state_dict = load_file(".")
+        state_dict = load_file("/content/")
         pipeline.generator.load_state_dict(state_dict)
 
         self.pipeline = pipeline.to(device=self.device, dtype=self.weight_dtype)
         self.pipeline.vae_decoder.to(torch.float16)
 
-        vae = get_wanx_vae_wrapper(".", torch.float16)
+        vae = get_wanx_vae_wrapper("/content/", torch.float16)
         vae.requires_grad_(False)
         vae.eval()
         self.vae = vae.to(self.device, self.weight_dtype)
