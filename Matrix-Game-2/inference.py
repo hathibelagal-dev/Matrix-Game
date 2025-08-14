@@ -106,7 +106,8 @@ class InteractiveGameInference:
         }
         
         cond_data = Bench_actions_universal(num_frames)
-        conditional_dict['mouse_cond'] = None
+        mouse_condition = cond_data['mouse_condition'].unsqueeze(0).to(device=self.device, dtype=self.weight_dtype)
+        conditional_dict['mouse_cond'] = mouse_condition
         conditional_dict['keyboard_cond'] = cond_data['keyboard_condition'].unsqueeze(0).to(device=self.device, dtype=self.weight_dtype)
         
         print("Now running the inference pipeline...")
